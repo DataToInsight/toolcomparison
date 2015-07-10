@@ -1,0 +1,3 @@
+c:\Program Files\PostgreSQL\9.3\bin>pg_dump -U postgres -Fc -f c:\Users\goostra\toolcomparison.dump toolcomparison
+
+c:\Program Files\PostgreSQL\9.3\bin>pg_restore -U postgres -d toolcomparison2 c:\Users\goostra\toolcomparison.dump
