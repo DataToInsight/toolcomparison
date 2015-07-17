@@ -9,11 +9,13 @@ def csv_to_list(path):
 	with open(path, 'rb') as f:
 		def namereader():
 			for row in csv.reader(f, delimiter=',', quotechar='"'):
-				yield [item.decode("cp1252") for item in row]
+				yield [item.decode("cp1252").strip() for item in row]
 		return list(chain.from_iterable(namereader()))
 
 name_first = csv_to_list('./../inputdata/firstnames.csv')
 name_last = csv_to_list('./../inputdata/lastnames.csv')
+countries = csv_to_list('./../inputdata/countries.csv')
+
 adjective = ["Happy", "Sad", "Poor", "Joyful", "Enlightened", "Ugly", "Beautiful", "Sleepy", "Fat", "Active", "Big", "Tiny", "Sleepy", "Silent", "Noisy", "Talky", "Whispering",
 			 "Drunk", "Sober", "Stoned", "Athletic", "Workaholic", "Lazy", "Travelling", "Unemployed", "Dizzy", "Productive", "Slim", "Tall", "Short",
 			 "Fun", "Loving", "Happy", "Working", "Sweet", "Soft", "Bigger"]
@@ -68,7 +70,8 @@ def random_person(id):
 						random_word(5),
 						random_word(5),
 						myRandom.choice(name_last)])
-	return(id, name)
+	country = myRandom.choice(countries)
+	return(id, name, country)
 
 
 def random_product(id):

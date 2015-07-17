@@ -55,7 +55,7 @@ def main(argv):
 		print "I am unable to connect to the database"
 	# Let the storage persist all data
 	try:
-		store_names(conn, get_persons(n_persons))
+		store_persons(conn, get_persons(n_persons))
 		store_products(conn, get_products(n_prod))
 		store_transactions(conn, get_transactions(n_persons, n_prod, n_trans))
 	finally:

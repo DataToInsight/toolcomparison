@@ -1,10 +1,9 @@
 
 
-def store_names(conn, generator):
+def store_persons(conn, generator):
 	cur = conn.cursor()
 	try:
 		try:
-			cur.execute("""DROP TABLE IF EXISTS names CASCADE""")
 			cur.execute("""DROP TABLE IF EXISTS persons CASCADE""")
 		except:
 			print "Failed to drop old names table"
@@ -12,13 +11,14 @@ def store_names(conn, generator):
 		try:
 			cur.execute("""CREATE TABLE persons (
 			id integer constraint names_PK primary key,
-			name TEXT
+			name TEXT,
+			country TEXT
 			);""")
 		except:
 			print "Failed to create persons table"
 		conn.commit()
 		for n in generator:
-			cur.execute("""INSERT INTO persons(id, name) VALUES(%s, %s)""", n)
+			cur.execute("""INSERT INTO persons(id, name, country) VALUES(%s, %s, %s)""", n)
 		conn.commit()
 	finally:
 		cur.close()
