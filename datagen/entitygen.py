@@ -1,23 +1,60 @@
+import os
 import string
 import random
 from datetime import timedelta, datetime
 import math
+from time import sleep
+from geopy.geocoders import GoogleV3
+geolocator = GoogleV3()
 
 myRandom = random.SystemRandom()
 
 # TODO: move out of entity layer, into outer layer
 import csv
 from itertools import chain
+def csv_to_list_chained(path):
+	with open(path, 'rb') as f:
+		def namereader():
+			for row in csv.reader(f, delimiter=',', quotechar='"'):
+				yield [item.decode("cp1252").strip()  if isinstance(item, basestring) else item for item in row]
+		return list(chain.from_iterable(namereader()))
+
+
 def csv_to_list(path):
 	with open(path, 'rb') as f:
 		def namereader():
 			for row in csv.reader(f, delimiter=',', quotechar='"'):
-				yield [item.decode("cp1252").strip() for item in row]
-		return list(chain.from_iterable(namereader()))
+				yield [item.decode("cp1252").strip()  if isinstance(item, basestring) else item for item in row]
+		return list(namereader())
 
-name_first = csv_to_list('./../inputdata/firstnames.csv')
-name_last = csv_to_list('./../inputdata/lastnames.csv')
+name_first = csv_to_list_chained('./../inputdata/firstnames.csv')
+name_last = csv_to_list_chained('./../inputdata/lastnames.csv')
 countries = csv_to_list('./../inputdata/countries.csv')
+
+def get_geos(names):
+	for n in names:
+		sleep(0.4)
+		print("")
+		print(n)
+		location = geolocator.geocode(n)
+		if location is not None:
+			print((location.address, location.latitude, location.longitude))
+			yield (n, location.latitude, location.longitude)
+		else:
+			print("NO GEO FOUND: " + n)
+
+
+def write_csv(f, gen):
+	with open(f, 'wb') as csvfile:
+		csvwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+		for r in gen:
+			csvwriter.writerow([item.encode("cp1252") if isinstance(item, basestring) else item for item in r])
+
+geo_path = './../inputdata/geo_countries.csv'
+if not os.path.isfile(geo_path):
+	write_csv(geo_path, get_geos(countries))
+
+geo_countries = csv_to_list(geo_path)
 
 adjective = ["Happy", "Sad", "Poor", "Joyful", "Enlightened", "Ugly", "Beautiful", "Sleepy", "Fat", "Active", "Big", "Tiny", "Sleepy", "Silent", "Noisy", "Talky", "Whispering",
 			 "Drunk", "Sober", "Stoned", "Athletic", "Workaholic", "Lazy", "Travelling", "Unemployed", "Dizzy", "Productive", "Slim", "Tall", "Short",
@@ -77,15 +114,16 @@ all_known_matches = generate_matches()
 def random_word(N):
 	return ''.join(myRandom.choice(string.ascii_uppercase + string.digits) for _ in range(N))
 
-
 def random_person(id):
 	name= ' '.join([myRandom.choice(name_first),
 					 myRandom.choice(name_first),
 						random_word(5),
 						random_word(5),
 						myRandom.choice(name_last)])
-	country = myRandom.choice(countries)
-	return(id, name, country)
+
+	country = myRandom.choice(geo_countries)
+	print(country)
+	return(id, name, country[0], country[1], country[2])
 
 
 def random_product(id):

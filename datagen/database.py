@@ -12,13 +12,15 @@ def store_persons(conn, generator):
 			cur.execute("""CREATE TABLE persons (
 			id integer constraint names_PK primary key,
 			name TEXT,
-			country TEXT
+			country TEXT,
+			latitude double precision,
+			longitude double precision
 			);""")
 		except:
 			print "Failed to create persons table"
 		conn.commit()
 		for n in generator:
-			cur.execute("""INSERT INTO persons(id, name, country) VALUES(%s, %s, %s)""", n)
+			cur.execute("""INSERT INTO persons(id, name, country, latitude, longitude) VALUES(%s, %s, %s, %s, %s)""", n)
 		conn.commit()
 	finally:
 		cur.close()
