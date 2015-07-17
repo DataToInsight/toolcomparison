@@ -62,13 +62,37 @@ def store_transactions(conn, generator):
 				persons_id_buyer integer REFERENCES persons(id) ,
 				persons_id_seller integer REFERENCES persons(id),
 				products_id integer REFERENCES products(id),
-				price_factor double precision
+				price_factor double precision,
+				moment timestamp
 				);""")
 		except:
 			print "Failed to create transaction table"
 		conn.commit()
 		for n in generator:
-			cur.execute("""INSERT INTO transactions(persons_id_buyer, persons_id_seller, products_id, price_factor) VALUES(%s, %s, %s, %s)""", n)
+			cur.execute("""INSERT INTO transactions(persons_id_buyer, persons_id_seller, products_id, price_factor, moment) VALUES(%s, %s, %s, %s, %s)""", n)
+		conn.commit()
+	finally:
+		cur.close()
+
+def store_matches(conn, generator):
+	cur = conn.cursor()
+	try:
+		try:
+			cur.execute("""DROP TABLE IF EXISTS matches CASCADE""")
+		except:
+			print "Failed to drop old matches table"
+		conn.commit()
+		try:
+			cur.execute("""CREATE TABLE matches (
+				label TEXT,
+				start timestamp,
+				finish timestamp
+				);""")
+		except:
+			print "Failed to create matches table"
+		conn.commit()
+		for n in generator:
+			cur.execute("""INSERT INTO matches(label, start, finish) VALUES(%s, %s, %s)""", n)
 		conn.commit()
 	finally:
 		cur.close()

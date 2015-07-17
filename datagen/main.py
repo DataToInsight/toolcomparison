@@ -58,6 +58,7 @@ def main(argv):
 		store_persons(conn, get_persons(n_persons))
 		store_products(conn, get_products(n_prod))
 		store_transactions(conn, get_transactions(n_persons, n_prod, n_trans))
+		store_matches(conn, get_matches())
 	finally:
 		conn.close()
 

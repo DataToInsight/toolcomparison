@@ -1,5 +1,8 @@
 import string
 import random
+from datetime import timedelta, datetime
+import math
+
 myRandom = random.SystemRandom()
 
 # TODO: move out of entity layer, into outer layer
@@ -58,8 +61,19 @@ product_parts = ["Monkey", "Cat", "Dog", "Kitten", "Parrot", "Chicken", "Cow", "
 				 "Kibbling", "Haring", "Rabbit", "Snail", "Ostrich" , "Puma", "Gorilla", "Unicorn"
 				 ]
 
+def generate_matches():
+	now = datetime.now()
+	match_day = [(now - timedelta(days=d, seconds=now.second, microseconds=now.microsecond)) for d in range(7,21,2)]
+	match_day.reverse()
+	for x in range(0, len(match_day)):
+		yield (''.join(["Matchday ", (1+x).__str__()]),
+		match_day[x]-timedelta(hours=4),
+		match_day[x]+timedelta(hours=4))
 
-events = [""]
+
+all_known_matches = generate_matches()
+
+
 def random_word(N):
 	return ''.join(myRandom.choice(string.ascii_uppercase + string.digits) for _ in range(N))
 
@@ -87,6 +101,7 @@ def random_product(id):
 	price = pow(2,myRandom.uniform(1.5, 5))
 	return (id, label, price, category)
 
+
 def random_flip(flipped_tuple):
 	if myRandom.choice( [True, False] ):
 		return flipped_tuple
@@ -94,13 +109,35 @@ def random_flip(flipped_tuple):
 		return flipped_tuple[1], flipped_tuple[0]
 
 
+def during_match(date_time):
+	for m in all_known_matches:
+		if m[1] < date_time < m[2]:
+			return True
+	return False
+
+
 def random_transaction(person1, person2, n_products):
 	buyer, seller = random_flip((person1, person2))
-	return [buyer,
+	hour_of_day = 24*math.sin(myRandom.uniform(0, math.pi))
+	day = myRandom.randint(0, 31*2)
+	buy_time = 	datetime.now() - timedelta(hours=hour_of_day, days=day)
+	product = myRandom.randint(0, n_products-1)
+	if during_match(buy_time):
+		if myRandom.uniform(0,10)<3:
+			if product_parts % 3 < 2:
+				buy_time = buy_time - timedelta(hours=myRandom.uniform(8, 40))
+			else:
+				buy_time = buy_time + timedelta(hours=myRandom.uniform(8, 40))
+	return (buyer,
 		seller,
-		myRandom.randint(0, n_products-1), # product
-		myRandom.lognormvariate(0.5, 0.05) # pricefactor
-		]
+		product,
+		myRandom.lognormvariate(0.5, 0.05), # pricefactor
+		buy_time
+		)
+
+
+def get_matches():
+	return all_known_matches
 
 
 # name -> transaction -> product
