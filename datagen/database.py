@@ -36,13 +36,14 @@ def store_products(conn, generator):
 			cur.execute("""CREATE TABLE products (
 			id integer constraint products_PK primary key,
 			label TEXT,
-			price double precision
+			price double precision,
+			category TEXT
 			);""")
 		except:
 			print "Failed to create product table"
 		conn.commit()
 		for n in generator:
-			cur.execute("""INSERT INTO products(id, label, price) VALUES(%s, %s, %s)""", n)
+			cur.execute("""INSERT INTO products(id, label, price, category) VALUES(%s, %s, %s, %s)""", n)
 		conn.commit()
 	finally:
 		cur.close()
