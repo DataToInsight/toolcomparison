@@ -122,8 +122,15 @@ def random_person(id):
 						myRandom.choice(name_last)])
 
 	country = myRandom.choice(geo_countries)
-	print(country)
-	return(id, name, country[0], country[1], country[2])
+	# Estimate
+	# 111,111 * cos(latitude) meters in the x direction is 1 degree (of longitude).
+	# 111,111 meters (111.111 km) in the y direction is 1 degree (of latitude)
+	longitude = float(country[1])
+	latitude = float(country[2])
+	# offset the location with sigma of 5 km
+	dx =  myRandom.normalvariate(0, 10.0) / 111.111 * math.cos(math.radians(latitude))
+	dy = myRandom.normalvariate(0, 10.0) / 111.111
+	return(id, name, country[0], longitude + dx, latitude+dy)
 
 
 def random_product(id):
