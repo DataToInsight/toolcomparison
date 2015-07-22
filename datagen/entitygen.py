@@ -60,38 +60,12 @@ adjective = ["Happy", "Sad", "Poor", "Joyful", "Enlightened", "Ugly", "Beautiful
 			 "Drunk", "Sober", "Stoned", "Athletic", "Workaholic", "Lazy", "Travelling", "Unemployed", "Dizzy", "Productive", "Slim", "Tall", "Short",
 			 "Fun", "Loving", "Happy", "Working", "Sweet", "Soft", "Bigger"]
 
-adjective2 = {"African" : "Africa",
-			  "European" : "Europe",
-			  "Asian" : "Asia",
-			  "Dutch" : "Europe",
-			  "NorthAmerican" : "Europe",
-			  "Greek" : "Europe?",
-			  "Italian" : "Europe",
-			  "German" : "Europe",
-			  "Venezuelean" : "Latin-America",
-			  "Bolivian" : "Latin-America",
-			  "Belgian" : "Europe",
-			  "Spanish" : "Europe",
-			  "Colombian" : "Latin-America",
-			  "Brazilian" : "Latin-America",
-			  "Argentinian" : "Latin-America",
-			  "Peruvian" : "Latin-America",
-			  "Chinese" : "Asia",
-			  "Chilian" : "Latin-America",
-			  "Japanese" : "Asia",
-			  "Mexican" : "Latin-America",
-			  "United States" : "America",
-			  "Canadian" : "America",
-			  "Arctic" : "Cold",
-			  "Antarctic" : "Cold",
-			  "Korean" : "Asia",
-			  "Australian" : "Austrasia",
-			  "Portugese" : "Europe",
-			  "Irish" : "Europe",
-			  "Swedish" : "Europe",
-			  "Finish" : "Europe",
-			  "Norwegian" : "Europe",
-			  "Danish" : "Europe"}
+adjective2 = {"America" : [ "NorthAmerican", "UnitedStates", "Canadian"],
+			  "Austrasia" : ["Asian", "Chinese", "Japanese", "Korean", "Australian"],
+			  "Europe" : ["European", "Dutch", "Greek", "Italian", "German", "Belgian", "Spanish", "Portugese", "Irish",  "Swedish", "Finnish", "Norwegian", "Danish" ],
+			 "Latin-America" : ["Venezuelean", "Bolivian", "Colombian", "Brazilian", "Argentinian", "Peruvian", "Chilian", "Mexican"]
+			}
+adjective2_keys = list(adjective2.keys())
 
 product_parts = ["Monkey", "Cat", "Dog", "Kitten", "Parrot", "Chicken", "Cow", "Kangaroo", "Sheep", "Sparrow", "Bird",
 				 "Lion", "Tiger", "Zebra", "Giraffe", "Crocodile", "Piranha", "Penguin", "Snake", "Pig", "Whale", "Dolphin",
@@ -100,7 +74,7 @@ product_parts = ["Monkey", "Cat", "Dog", "Kitten", "Parrot", "Chicken", "Cow", "
 
 def generate_matches():
 	now = datetime.now()
-	match_day = [(now - timedelta(days=d, seconds=now.second, microseconds=now.microsecond)) for d in range(7,21,2)]
+	match_day = [(now - timedelta(days=d, seconds=now.second, microseconds=now.microsecond)) for d in range(7,22,2)]
 	match_day.reverse()
 	for x in range(0, len(match_day)):
 		yield (''.join(["Matchday ", (1+x).__str__()]),
@@ -108,7 +82,7 @@ def generate_matches():
 		match_day[x]+timedelta(hours=4))
 
 
-all_known_matches = generate_matches()
+all_known_matches = list(generate_matches())
 
 
 def random_word(N):
@@ -134,8 +108,9 @@ def random_person(id):
 
 
 def random_product(id):
-	country = myRandom.choice(adjective2.keys())
-	category = adjective2[country] # value
+	allowed_keys = [adjective2_keys[d] for d in range(id % 3, len(adjective2_keys), 3)] # id % 3 will be equal to key_index % 3
+	category = myRandom.choice(allowed_keys)
+	country = myRandom.choice(adjective2[category])
 	if myRandom.randint(0,10) < 1:
 		category = None
 
@@ -156,7 +131,7 @@ def random_flip(flipped_tuple):
 
 def during_match(date_time):
 	for m in all_known_matches:
-		if m[1] < date_time < m[2]:
+		if m[1] <= date_time <= m[2]:
 			return True
 	return False
 
@@ -164,19 +139,24 @@ def during_match(date_time):
 def random_transaction(person1, person2, n_products):
 	buyer, seller = random_flip((person1, person2))
 	hour_of_day = 24*math.sin(myRandom.uniform(0, math.pi))
-	day = myRandom.randint(0, 31*2)
+	day = myRandom.randint(0, 27)
 	buy_time = 	datetime.now() - timedelta(hours=hour_of_day, days=day)
 	product = myRandom.randint(0, n_products-1)
+	price_factor = 1
 	if during_match(buy_time):
-		if myRandom.uniform(0,10)<3:
-			if product_parts % 3 < 2:
-				buy_time = buy_time - timedelta(hours=myRandom.uniform(8, 40))
+		if product % 3 < 2 and myRandom.uniform(0, 10) <= 7:
+			price_factor = myRandom.lognormvariate(0, 0.1)
+			if product % 3 == 0:
+				buy_time = buy_time - timedelta(hours=myRandom.uniform(8, 16))
 			else:
-				buy_time = buy_time + timedelta(hours=myRandom.uniform(8, 40))
+				buy_time = buy_time + timedelta(hours=myRandom.uniform(8, 16))
+				price_factor = myRandom.lognormvariate(0.7, 0.05)
+	else:
+		myRandom.lognormvariate(0, 0.01)
 	return (buyer,
 		seller,
 		product,
-		myRandom.lognormvariate(0.5, 0.05), # pricefactor
+		price_factor, # pricefactor
 		buy_time
 		)
 
@@ -187,21 +167,21 @@ def get_matches():
 
 # name -> transaction -> product
 def get_persons(n_persons):
-	for i in range(n_persons):
+	for i in range(int(n_persons)):
 		yield random_person(i)
 
 
 def get_products(n_prod):
-	for i in range(n_prod):
+	for i in range(int(n_prod)):
 		# random null for category
 		yield random_product(i)
 
 
-def get_transactions(n_persons, n_prod, n_trans):
-	for person1 in range(n_persons):
+def get_transactions(n_persons, n_prod):
+	for person1 in range(int(n_persons)):
 		if(person1>0):
-			# randomly choose degree between 1 and 3
-			degree = myRandom.randint(1,3)
+			# randomly choose degree
+			degree = myRandom.randint(1,4)
 			for j in range(degree):
 				person2 = myRandom.randint(0, person1-1)
 				yield random_transaction(person1, person2, n_prod)

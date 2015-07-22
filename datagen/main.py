@@ -20,26 +20,26 @@ def print_items(n_persons, n_prod, n_trans):
 
 def main(argv):
 	# Determine how much data to generate
-	n_persons = 125
-	n_prod = 125
-	n_trans = 250
+	#n_persons = 12500
+	#n_prod = 12500
+	# bol.com
+	n_persons = 15E6 # bol.com has 7 million articles, and 17.5 milion transactions a year in 2011 when it had 3.4 milion customers
+	n_prod = 10E6
 	try:
-		opts, args = getopt.getopt(argv,"hn:p:t:",["persons=","products=","transactions="])
+		opts, args = getopt.getopt(argv,"hn:p:t:",["persons=","products="])
 	except getopt.GetoptError:
-		print 'toolcomparison.py -n <persons> -p <products> -t <transactions>'
+		print 'toolcomparison.py -n <persons> -p <products>'
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-			print 'toolcomparison.py -n <persons> -p <products> -t <transactions>'
+			print 'toolcomparison.py -n <persons> -p <products>'
 			sys.exit()
 		elif opt in ("-n", "--persons"):
 			n_persons = arg
 		elif opt in ("-p", "--prods"):
 			n_prod = arg
-		elif opt in ("-t", "--trans"):
-			n_trans = arg
 		else:
-			print 'toolcomparison.py -n <persons> -p <products> -t <transactions>'
+			print 'toolcomparison.py -n <persons> -p <products>'
 			sys.exit()
 	# Determine where to store the data
 	with open('./../config.json') as config_file:
@@ -55,10 +55,14 @@ def main(argv):
 		print "I am unable to connect to the database"
 	# Let the storage persist all data
 	try:
-		store_persons(conn, get_persons(n_persons))
-		store_products(conn, get_products(n_prod))
-		store_transactions(conn, get_transactions(n_persons, n_prod, n_trans))
+		print("Generating matches")
 		store_matches(conn, get_matches())
+		print("Generating persons")
+		store_persons(conn, get_persons(n_persons))
+		print("Generating products")
+		store_products(conn, get_products(n_prod))
+		print("Generating transactions")
+		store_transactions(conn, get_transactions(n_persons, n_prod))
 	finally:
 		conn.close()
 
