@@ -1,3 +1,10 @@
+from itertools import islice, chain
+
+def batch(iterable, size):
+	sourceiter = iter(iterable)
+	while True:
+		batchiter = islice(sourceiter, size)
+		yield chain([batchiter.next()], batchiter)
 
 
 def store_persons(conn, generator):
@@ -19,8 +26,9 @@ def store_persons(conn, generator):
 		except:
 			print "Failed to create persons table"
 		conn.commit()
-		for n in generator:
-			cur.execute("""INSERT INTO persons(id, name, country, latitude, longitude) VALUES(%s, %s, %s, %s, %s)""", n)
+		for n in batch(generator, 50000):
+			args_str = ','.join(cur.mogrify("(%s, %s, %s, %s, %s)", x) for x in n)
+			cur.execute("INSERT INTO persons(id, name, country, latitude, longitude) VALUES " + args_str)
 		conn.commit()
 	finally:
 		cur.close()
@@ -44,8 +52,9 @@ def store_products(conn, generator):
 		except:
 			print "Failed to create product table"
 		conn.commit()
-		for n in generator:
-			cur.execute("""INSERT INTO products(id, label, price, category) VALUES(%s, %s, %s, %s)""", n)
+		for n in batch(generator, 50000):
+			args_str = ','.join(cur.mogrify("(%s, %s, %s, %s)", x) for x in n)
+			cur.execute("INSERT INTO products(id, label, price, category) VALUES " + args_str)
 		conn.commit()
 	finally:
 		cur.close()
@@ -70,8 +79,9 @@ def store_transactions(conn, generator):
 		except:
 			print "Failed to create transaction table"
 		conn.commit()
-		for n in generator:
-			cur.execute("""INSERT INTO transactions(persons_id_buyer, persons_id_seller, products_id, price_factor, moment) VALUES(%s, %s, %s, %s, %s)""", n)
+		for n in batch(generator, 50000):
+			args_str = ','.join(cur.mogrify("(%s, %s, %s, %s, %s)", x) for x in n)
+			cur.execute("INSERT INTO transactions(persons_id_buyer, persons_id_seller, products_id, price_factor, moment) VALUES " + args_str)
 		conn.commit()
 	finally:
 		cur.close()
@@ -93,8 +103,9 @@ def store_matches(conn, generator):
 		except:
 			print "Failed to create matches table"
 		conn.commit()
-		for n in generator:
-			cur.execute("""INSERT INTO matches(label, start, finish) VALUES(%s, %s, %s)""", n)
+		for n in batch(generator, 50000):
+			args_str = ','.join(cur.mogrify("(%s, %s, %s)", x) for x in n)
+			cur.execute("INSERT INTO matches(label, start, finish) VALUES " + args_str)
 		conn.commit()
 	finally:
 		cur.close()
